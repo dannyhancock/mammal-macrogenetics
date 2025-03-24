@@ -1,40 +1,39 @@
-species,scientific_name,continent,occurrences,occurrences_after_cleaning,add_indiv_from_study,final_occurrences,populations,max_dist,source
-american_pika,Ochotona princeps,NA,8509,4457,0,4457,14,6.145643742,Schmidt et al. 2021
-bank_vole,Myodes glareolus,EU,111742,16903,0,16903,103,39.00169868,Marková et al. 2020
-beaver,Castor fiber,EU,184721,54104,0,54104,7,91.21211345,Senn et al. 2014
-black_bear,Ursus americanus,NA,19897,13060,0,13060,18,81.69045978,Puckett et al. 2015
-bobcat,Lynx rufus,NA,19229,10875,0,10875,5,1.544503309,Kozakiewicz et al. 2019
-chamois,Rupicapra rupicapra,EU,71868,9994,0,9994,6,8.757198391,Leugger et al. 2021
-coyote,Canis latrans,NA,41052,25664,0,25664,28,54.94464051,Heppenheimer et al. 2018
-cryptic_field_vole,Microtus agrestis,EU,51395,16030,0,16030,9,28.60095954,Fletcher et al. 2019
-dalls_sheep,Ovis dalli dalli,NA,277,157,16,173,16,38.47959151,Roffler et al. 2016
-european_wildcat,Felis silvestris S.,EU,26474,8465,0,8465,13,34.41306605,von Thaden et al. 2020
-european_wolf,Canis lupus (Europe),EU,66405,15570,0,15570,10,27.51010013,Stronen et al. 2013
-greater_glider,Petauroides volans,AUS,31164,22921,0,22921,10,1.527403218,Knipler et al. 2023
-grey_long_eared_bat,Plecotus austriacus,EU,11149,2783,0,2783,10,13.75690321,Razgour et al. 2018
-grey_wolf,Canis lupus (North America),NA,11709,3799,0,3799,6,77.36802366,Schweizer et al. 2015
-ground_squirrel,Urocitellus endemicus ,NA,15,9,5,14,5,0.650910914,Barbosa et al. 2021
-koala,Phascolarctos cinereus,AUS,207520,130264,0,130264,31,19.10480587,Lott et al. 2022
-lynx,Lynx lynx,EU,65482,24251,0,24251,8,32.29726346,Förster et al. 2018
-marsh_rat_sciureus,Holochilus sciureus,SA,223,50,18,68,5,23.70952973,Prado et al. 2019
-myotis_bats,Myotis lucifugus,NA,10640,2053,0,2053,4,34.18277565,Donaldson et al. 2017
-northern_quoll,Dasyurus hallucatus,AUS,12768,1243,0,1243,23,29.70486586,von Takach et al. 2024
-pilbara_ningaui,Ningaui timealeyi,AUS,769,309,0,309,24,5.089373631,Skey et al. 2023
-platypus,Ornithorhynchus anatinus ,AUS,14836,7911,0,7911,4,24.60540505,Martin et al. 2018
-polar_bear,Ursus maritimus,NA,3410,623,0,623,12,66.06053885,Jensen et al. 2020
-prairie_dogs,Cynomys parvidens,NA,267,156,7,163,7,1.046333207,Giglio et al. 2021
-puma,Puma concolor,NA,5768,3184,0,3184,4,8.521018279,Gustafson et al. 2022
-pygmy_rabbits,Brachylagus idahoensis,NA,420,151,458,609,14,4.944525513,Byer et al. 2021
-red_fox,Vulpes vulpes,EU,396360,116425,0,116425,30,82.82452546,McDevitt et al. 2022
-sandy_inland_mouse,Pseudomys hermannsburgensis,AUS,12461,3334,0,3334,30,6.423142964,Skey et al. 2023
-snow_sheep,Ovis nivicola,ASIA,81,14,39,53,6,16.86302069,Detsav et al. 2018
-tasmanian_devil,Sarcophilus harrisii,AUS,25479,219,39,258,9,3.117589737,Epstein et al. 2016
-tiger_asia,Panthera tigris (Asia),ASIA,1021,285,0,285,4,59.87218586,Armstrong et al. 2021
-tiger_india,Panthera tigris (India),ASIA,1021,285,0,285,4,22.34500701,Armstrong et al. 2021
-water_vole,Microtus richardsoni,NA,1156,362,0,362,5,13.05914345,Duckett et al. 2023
-western_pebble_mouse,Pseudomys chapmani,AUS,218,86,74,160,9,5.292834148,Skey et al. 2023
-white_footed_mouse,Peromyscus leucopus ,NA,68305,10475,0,10475,23,1.902250058,Munshi-South et al. 2016
-wild_boar_europe,Sus scrofa (Europe),EU,132564,51402,0,51402,15,42.81679019,Iacolina et al. 2016
-wild_boar_italy,Sus scrofa (Italy),EU,132564,51402,0,51402,5,10.05179893,Scandura et al. 2016
-wolverine,Gulo gulo,EU,22386,19092,0,19092,4,15.83700954,Ekblom et al. 2018
-wombat,Vombatus ursinus,AUS,85527,21065,0,21065,7,8.235672503,Martin et al. 2019
+scientific_name,species,continent,occurrences,occurrences_after_cleaning,add_indiv_from_study,final_occurrences,populations,max_dist,No. SNPs,Ho,Fst,source
+Ochotona princeps,american_pika,NA,8509,4457,0,4457,14,549.2979179,49074,0.19122,0.24909,Schmidt et al. 2021
+Myodes glareolus,bank_vole,EU,111742,16903,0,16903,103,3301.731605,6078,0.17282,0.3287,Marková et al. 2020
+Castor fiber,beaver,EU,184721,54104,0,54104,7,6409.388043,307,0.0913,0.6615,Senn et al. 2014
+Ursus americanus,black_bear,NA,19897,13060,0,13060,18,5992.790607,29213,0.0962292,0.10991,Puckett et al. 2015
+Lynx rufus,bobcat,NA,19229,10875,0,10875,5,149.0376723,13521,0.1565,0.0568,Kozakiewicz et al. 2019
+Rupicapra rupicapra,chamois,EU,71868,9994,0,9994,6,690.469984,20907,0.0795721,0.033015,Leugger et al. 2021
+Canis latrans,coyote,NA,41052,25664,0,25664,28,4468.356586,22935,0.0262924,0.022057,Heppenheimer et al. 2018
+Microtus agrestis,cryptic_field_vole,EU,51395,16030,0,16030,9,2426.570339,35436,0.0804842,0.51477,Fletcher et al. 2019
+Ovis dalli dalli,dalls_sheep,NA,518,348,15,363,15,1874.723752,189,0.2804,0.2116,Roffler et al. 2016
+Felis silvestris S.,european_wildcat,EU,26474,8465,0,8465,13,2880.282199,97,0.3644,0.1383,von Thaden et al. 2020
+Canis lupus (Europe),european_wolf,EU,66405,15570,0,15570,10,2796.482668,80223,0.23047,0.098769,Stronen et al. 2013
+Petauroides volans,greater_glider,AUS,31164,22921,0,22921,10,167.8081362,18808,0.1037,0.2036,Knipler et al. 2023
+Plecotus austriacus,grey_long_eared_bat,EU,11149,2783,0,2783,10,1512.331385,6061,0.218436,0.047389,Razgour et al. 2018
+Canis lupus (North America),grey_wolf,NA,11709,3799,0,3799,6,4134.535074,13092,0.176248,0.064446,Schweizer et al. 2015
+Phascolarctos cinereus,koala,AUS,207520,130264,0,130264,31,2105.320361,4796,0.1852,0.2061,Lott et al. 2022
+Lynx lynx,lynx,EU,65482,24251,0,24251,8,2429.668467,97,0.3076,0.1847,Förster et al. 2018
+Holochilus sciureus,marsh_rat_sciureus,SA,223,48,18,66,5,2629.116238,17514,0.0906,0.1079,Prado et al. 2019
+Myotis lucifugus,myotis_bats,NA,10640,2053,0,2053,4,2529.38355,33610,0.192856,0.002047,Donaldson et al. 2017
+Dasyurus hallucatus,northern_quoll,AUS,12768,1243,0,1243,23,3131.686944,12963,0.0547,0.4007,von Takach et al. 2024
+Ningaui timealeyi,pilbara_ningaui,AUS,769,309,0,309,24,527.0873761,4841,0.1966,0.0391,"Skey et al. 2023, Shaw 2023"
+Ornithorhynchus anatinus ,platypus,AUS,14836,7911,0,7911,4,2734.918761,136267,0.324889,0.24079,Martin et al. 2018
+Ursus maritimus,polar_bear,NA,3410,623,0,623,12,3043.327144,13488,0.185789,0.024467,Jensen et al. 2020
+Cynomys parvidens,prairie_dogs,NA,267,156,7,163,7,95.0294116,3550,0.2039,0.3679,Giglio et al. 2021
+Puma concolor,puma,NA,5768,3184,0,3184,4,857.1078211,16285,0.283195,0.12359,Gustafson et al. 2022
+Brachylagus idahoensis,pygmy_rabbits,NA,420,151,458,609,14,546.1418535,50605,0.4231,0.0522,Byer et al. 2021
+Vulpes vulpes,red_fox,EU,396360,116425,0,116425,30,5591.867302,15003,0.227944,0.063497,McDevitt et al. 2022
+Pseudomys hermannsburgensis,sandy_inland_mouse,AUS,12461,3334,0,3334,30,663.1196071,3804,0.1471,0.0151,"Skey et al. 2023, Shaw 2023"
+Ovis nivicola,snow_sheep,ASIA,81,14,39,53,6,998.6048838,1121,0.222416,0.083743,Dotsev et al. 2018
+Sarcophilus harrisii,tasmanian_devil,AUS,25479,219,39,258,9,268.0610031,18962,0.1603,0.0608,Epstein et al. 2016
+Panthera tigris (Asia),tiger_asia,ASIA,1021,285,0,285,4,6068.31379,6445422,0.172859,0.18594,Armstrong et al. 2021
+Panthera tigris (India),tiger_india,ASIA,1021,285,0,285,4,2403.249526,6445422,0.1874,0.14206,Armstrong et al. 2021
+Microtus richardsoni,water_vole,NA,1156,362,0,362,5,1253.178668,10379876,0.0738099,0.18547,"Duckett et al. 2023, Carstens 2023"
+Pseudomys chapmani,western_pebble_mouse,AUS,218,86,74,160,9,547.7658627,3771,0.2524,0.041,"Skey et al. 2023, Shaw 2023"
+Peromyscus leucopus ,white_footed_mouse,NA,68305,10475,0,10475,23,161.1321957,14930,0.108968,0.05191,Munshi-South et al. 2016
+Sus scrofa (Europe),wild_boar_europe,EU,132564,51402,0,51402,15,3538.330248,49803,0.190944,0.12354,Iacolina et al. 2016
+Sus scrofa (Italy),wild_boar_italy,EU,132564,51402,0,51402,5,919.7323573,48296,0.238983,0.095352,Scandura et al. 2016
+Gulo gulo,wolverine,EU,22386,19092,0,19092,4,1021.23805,354,0.4431,0.0341,Ekblom et al. 2018
+Vombatus ursinus,wombat,AUS,85527,21065,0,21065,7,847.5502711,28082,0.1587,0.1523,Martin et al. 2019

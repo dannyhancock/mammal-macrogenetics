@@ -1,33 +1,6 @@
 library(raster)
-
-# function to project and aggregate rasters to same as bioclim rasters
-resizeRasterStack <- function(source_stack, target_stack, agg_factor=4) {
-  print(names(source_stack))
-  if (identical(crs(source_stack), crs(target_stack))) {
-    print("Identical CRS, Aggregating")
-    resolution <- res(target_stack)
-    fact <- resolution/res(source_stack)
-    agg_raster <- aggregate(source_stack, fact, fun='mean')
-  } else {
-    print("Raster Stack Requires Reprojecting")
-    gc()
-    agg_raster <- aggregate(source_stack, fact=agg_factor) # this line is to make the projection manageable with small amounts of RAM but may need changing
-    agg_raster <- projectRaster(agg_raster, res=res(target_stack[[1]]), crs=crs(target_stack[[1]]))
-  }
-  return(agg_raster)
-}
-
-# function for cropping raster stack with output of rasterstack 
-# (rather than rasterbrick) for input into biomod2
-cropRasterStack <- function(stack, e) {
-  cropped_predictors <- stack()
-  for (i in 1:length(names(stack))) {
-    cropped_layer <- crop(stack[[i]], extent(e))
-    cropped_predictors <- addLayer(cropped_predictors, cropped_layer)
-  }
-  return(cropped_predictors)
-}
-
+source(functions.R)
+source("functions.R")
 
 ##################
 ## Bioclim Maps ##
@@ -91,7 +64,7 @@ bioclim_predictors <- c('wc2.1_2.5m_bio_1', 'wc2.1_2.5m_bio_2', 'wc2.1_2.5m_bio_
                         'wc2.1_2.5m_bio_12', 'wc2.1_2.5m_bio_15', 'wc2.1_2.5m_bio_18')
 uncorrelated_bc_predictors <- subset(bc_predictors, bioclim_predictors)
 
-uncorrelated_hfp_predictors <- subset(hfp_predictors, c('Built2009','croplands2005','Pasture2009','Railways', 'Roads'))
+uncorrelated_hfp_predictors <- subset(hfp_predictors, c('Built2009','croplands2005','Pasture2009'))
 
 uncorrelated_cop_predictors <- subset(cop_predictors, c('grass', 'shrub', 'tree'))
 

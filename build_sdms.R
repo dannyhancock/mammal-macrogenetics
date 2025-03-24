@@ -7,17 +7,7 @@ library(biomod2)
 library(remotes)
 library(rgbif)
 library(stringr)
-
-# function for cropping raster stack with output of rasterstack (rather than rasterbrick)
-# for input into biomod2
-cropRasterStack <- function(stack, e) {
-  cropped_predictors <- stack()
-  for (i in 1:length(names(stack))) {
-    cropped_layer <- crop(stack[[i]], extent(e))
-    cropped_predictors <- addLayer(cropped_predictors, cropped_layer)
-  }
-  return(cropped_predictors)
-}
+source("functions.R")
 
 ### ENVIRONMENTAL DATA ###
 path <- "maps/bioclim/bioclim_5k"
@@ -67,18 +57,12 @@ gbif_download <- gbif_download %>%
 # sciureus_coords <- readr::read_csv(paste("data/",SPECIES,"/",SPECIES,"_indiv_locations.csv", sep=""))
 # sciureus_coords$species <- 'Holochilus_sciureus'
 # gbif_download <- rbind(unique(gbif_download[,c('lon', 'lat', 'species')]),sciureus_coords)
-
+#
 # dall_coords = readr::read_csv(paste("data/",SPECIES,"/",SPECIES,"_coords.csv", sep=""))
 # dall_coords <- dall_coords[,c("longitude","latitude")]
 # dall_coords <- cbind(dall_coords, "Ovis Dalli")
 # colnames(dall_coords) <- c('lon','lat','species')
 # gbif_download <- rbind(gbif_download[,c('lon', 'lat', 'species')],dall_coords)
-#
-# squirrel_coords <- readr::read_csv(paste("data/",SPECIES,"/","SIDGS_ind.csv", sep=""))
-# squirrel_coords <- unique(squirrel_coords[,c("longitude","latitude")])
-# squirrel_coords['species'] <- "Urocitellus brunneus endemicus"
-# colnames(squirrel_coords) <- c("lon","lat","species")
-# gbif_download <- rbind(gbif_download[,c('lon', 'lat', 'species')],squirrel_coords)
 # 
 # prairie_coords <- readr::read_csv(paste("data/",SPECIES,"/","prairie_dogs_locations.csv", sep=""))
 # prairie_coords <- prairie_coords[,c("longitude","latitude")]
@@ -136,8 +120,8 @@ coordinates(acg) <- ~lon+lat
 crs(acg) <- crs(bioclim_predictors)
 # create a raster layer with the extent of acg
 r <- raster(acg)
-# set the resolution of the cells to 1 degree
-res(r) <- 1
+# set the resolution of the cells to 0.5 degrees
+res(r) <- 0.5
 # expand the extent of the rasterlayer by 10 degrees
 r <- extend(r, extent(r)+10)
 
@@ -251,12 +235,13 @@ for (version in c('bioclim', 'landscape', 'all')){
 
   myBiomodModelOut <- BIOMOD_Modeling(
     bm.format = myBiomodData,
-    models = c('GLM', 'GBM', 'CTA', 'SRE', 'RF', 'FDA', 'MARS', 'ANN', 'MAXENT', 'GAM'),
+    models = c('GBM','RF'),
     OPT.strategy = "bigboss",
+    #bm.options = myBiomodOption,
     CV.nb.rep = 5,
     CV.perc = 0.7, # split 70% of data for training in cross-validation
     prevalence = 0.5,
-    var.import = 3, 
+    var.import = 3,
     metric.eval = c('ROC','TSS','ACCURACY'),
     scale.models = TRUE,
     CV.do.full.models = FALSE,
@@ -280,13 +265,13 @@ for (version in c('bioclim', 'landscape', 'all')){
     ylim=c(0,1)
   )
   
-  # find top 5 models
-  roc_df <- subset(myBiomodModelEval[c('full.name', 'algo', 'metric.eval', "calibration", 'validation', 'evaluation')], metric.eval=='ROC')
-  roc_ordered <- roc_df[order(roc_df$evaluation, decreasing=TRUE),]
-  top_5 <- roc_ordered[1:5,1]
-  
   # retrieve minimum score of best N models
+  roc_df <- subset(myBiomodModelEval[c('full.name', 'algo', 'metric.eval', "calibration", 'validation', 'evaluation')], metric.eval=='ROC')
+  
+  # find top 5 models
   n_models <- 5
+  roc_ordered <- roc_df[order(roc_df$evaluation, decreasing=TRUE),]
+  top_5 <- roc_ordered[1:n_models,1]
   best_n <- min(tail(sort(roc_df$evaluation), n_models))-0.001
   
   # retrieve variable importance
@@ -299,7 +284,7 @@ for (version in c('bioclim', 'landscape', 'all')){
   var_imp <- as.data.frame(MyBiomodModelVarImp)
   
   # Variable importance of best 5 models
-  mean_variable_importance <- subset(var_imp, full.name == top_5) %>%
+  mean_variable_importance <- subset(var_imp, full.name %in% top_5) %>%
     group_by(expl.var) %>%
     summarise_at(vars(var.imp), list(name=mean))
   mean_variable_importance
@@ -358,7 +343,7 @@ for (version in c('bioclim', 'landscape', 'all')){
   myasc <- writeRaster(mygrd, paste("data/",SPECIES,"/circuitscape/",SPECIES,"_ensemble_",version,".asc", sep=""),format="ascii",overwrite=TRUE)
   
   # output results: models included in ensemble and AUC of ensemble.
-  top_5_row <- roc_ordered[1:5,]
+  top_5_row <- roc_ordered[1:n_models,]
   top_5_algo <- top_5_row[,2]
   avg_roc_train <- mean(top_5_row$calibration)
   avg_roc_val <- mean(top_5_row$validation)

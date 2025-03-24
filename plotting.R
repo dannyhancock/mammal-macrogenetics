@@ -4,211 +4,422 @@ library(plyr)
 library(ggpubr)
 library(data.table)
 library(gridExtra)
+library(maptools)
+library(cowplot)
+source("functions.R")
 
 #########################
 ### MODELLING RESULTS ###
 #########################
 
-## AIC results ##
-modresults <- read.csv('aic_results.csv')
+## Resistance Only - which (unoptimzied) resistance model best explains genetic divergence ##
+extra_arg <- "_multi_unoptimized_scaled_AICc"
+modresults <- read.csv(paste0('aic_results', extra_arg, '.csv'))
 
-## resistance only ##
-aic_resonly <- modresults[,c('biores','landres','allres')]
-aic_resonly_ranks <- t(apply(aic_resonly, 1, rank))
-aic_resonly_ranksums <- colSums(aic_resonly_ranks ==1)
+aic_resonly <- modresults[,c('biores_dist','landres_dist','allres_dist')]
+aic_mat <- as.matrix(aic_resonly[, c("biores_dist", "landres_dist", "allres_dist")])
 
-# Creating contingency table
-aic_cont_resonly <- table(c(col(aic_resonly_ranks)), c(aic_resonly_ranks))
-rownames(aic_cont_resonly) <- colnames(aic_resonly_ranks)
+# first for delta 2
+aic_resonly_adjusted_ranks_d2 <- t(apply(aic_mat, 1, function(x) adjusted_rank(x, delta_threshold=2)))
+aic_resonly_ranksums_adj_d2 <- colSums(aic_resonly_adjusted_ranks_d2 ==1)
 
-# Melting the data for plotting
-aic_resonly_for_plot <- melt(aic_cont_resonly)
-aic_resonly_for_plot$Var1 <- factor(aic_resonly_for_plot$Var1, 
-                                    levels=c('allres', 'biores', 'landres'),
-                                    labels=c('ALL', 'BIO', 'LAND'))
+first_ranks_d2 <- colSums(aic_resonly_adjusted_ranks_d2 == 1)
 
-aic_resonly_plot <- ggplot(aic_resonly_for_plot, aes(x=Var2, y=value, fill=Var1))+
-  geom_bar(stat = 'identity', position="stack")+
-  scale_fill_brewer(palette='Blues',name="IBR Model")+
-  ylim(c(0,41))+
-  xlab("Rank")+
-  ylab("Number of Species")+
-  theme_minimal()+
-  ggtitle('LME')+
-  theme(axis.title.x = element_blank(),
-        plot.title = element_text(hjust = 0.5),
-        text = element_text(size=12),
-        axis.title = element_text(size=14, face="bold"),
-        title = element_text(size=14, face="bold"),
-        legend.title = element_text(size=14),
-        legend.text = element_text(size=12))
-aic_resonly_plot
+# Convert to a data frame for ggplot
+df_first_d2 <- data.frame(
+  Model = factor(c("biores", "landres", "allres"), levels = c("biores", "landres", "allres")),
+  Count = as.numeric(first_ranks_d2)
+)
 
-## LAND ONLY ##
-# Read and process the data
-aic_landonly <- modresults[, c('landres', 'env', 'geog')]
-aic_landonly_ranks <- t(apply(aic_landonly, 1, rank))
-aic_landonly_ranksums <- colSums(aic_landonly_ranks == 1)
-
-# Creating contingency table
-aic_cont_landonly <- table(c(col(aic_landonly_ranks)), c(aic_landonly_ranks))
-rownames(aic_cont_landonly) <- colnames(aic_landonly_ranks)
-
-# Melting the data for plotting
-aic_landonly_for_plot <- melt(aic_cont_landonly)
-
-# Rename factors directly during assignment to ensure proper order
-aic_landonly_for_plot$Var1 <- factor(aic_landonly_for_plot$Var1, 
-                                     levels = c("geog", "env", "landres"),
-                                     labels = c("IBD", "IBE", "IBR(LAND)"))
-
-# Plotting
-aic_landonly_plot <- ggplot(aic_landonly_for_plot, aes(x = Var2, y = value, fill = Var1)) +
-  geom_bar(stat = 'identity', position = "stack") +
-  scale_fill_brewer(palette = 'Reds', name = "Driver") +
-  ylim(c(0, 41)) +
-  xlab("Rank of Driver") +
-  ylab("Number of Species") +
+# Plot the counts
+aic_resonly_plot_d2 <- ggplot(df_first_d2, aes(x = Model, y = Count, fill = Model)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = Count), vjust = -0.5, size = 3) +
+  scale_fill_brewer(palette = "Blues") +
+  ylim(0, 40) +
+  xlab("Model") +
+  ylab("Count of Datasets with Lowest AICc") +
   theme_minimal() +
-  theme(text = element_text(size = 12),
-        axis.title = element_text(size = 14, face = "bold"),
-        title = element_text(size = 16, face = "bold"),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
-        plot.title = element_text(hjust = 0.5))
-aic_landonly_plot
+  ggtitle(expression(LME - Delta~AICc~"\u2264"~2)) +
+  scale_x_discrete(labels = function(x) sapply(x, map_model_label)) +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_text(size = 11, color = "black"),
+        plot.title = element_text(hjust = 0.5),
+        text = element_text(size = 12),
+        legend.position = "none")
+aic_resonly_plot_d2
+
+# repeat for delta 7
+aic_resonly_adjusted_ranks_d7 <- t(apply(aic_mat, 1, function(x) adjusted_rank(x, delta_threshold=7)))
+aic_resonly_ranksums_adj_d7 <- colSums(aic_resonly_adjusted_ranks_d7 ==1)
+
+first_ranks_d7 <- colSums(aic_resonly_adjusted_ranks_d7 == 1)
+
+# Convert to a data frame for ggplot
+df_first_d7 <- data.frame(
+  Model = factor(c("biores", "landres", "allres"), levels = c("biores", "landres", "allres")),
+  Count = as.numeric(first_ranks_d7)
+)
+
+aic_resonly_plot_d7 <- ggplot(df_first_d7, aes(x = Model, y = Count, fill = Model)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = Count), vjust = -0.5, size = 3) +
+  scale_fill_brewer(palette = "Blues", name = "IBR Model") +
+  ylim(0, 40) +
+  xlab("Model") +
+  ylab("Count of Datasets with Lowest AICc") +
+  ggtitle(expression(LME - Delta~AICc~"\u2264"~7)) +
+  scale_x_discrete(labels = function(x) sapply(x, map_model_label)) +
+  theme_minimal() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_text(size = 12, color = "black"),
+        plot.title = element_text(hjust = 0.5),
+        text = element_text(size = 12),
+        legend.position = "none")
+aic_resonly_plot_d7
 
 
 ## MRM results ##
-mrm_results <- read.csv('mrm_r2_results.csv')
+extra_arg <- "_multi_unoptimized_scaled"
+mrm_results <- read.csv(paste0('mrm_r2_adj_results', extra_arg, '.csv'))
 
-## Resistance Only ##
-# Read and process the data
-mrm_resonly <- mrm_results[,c('biores','landres','allres')]
-mrm_resonly_ranks <- t(apply(-mrm_resonly, 1, rank))
-mrm_resonly_ranksums <- colSums(mrm_resonly_ranks ==1)
-
-# Creating contingency table
-mrm_resonly_cont <- table(c(col(mrm_resonly_ranks)), c(mrm_resonly_ranks))
-rownames(mrm_resonly_cont) <- colnames(mrm_resonly_ranks)
-
-levels(aic_resonly_for_plot$Var1) <- c("IBRALL", "IBRBIO", "IBRLAND")
-
-# Melting the data for plotting
-mrm_resonly_for_plot <- melt(mrm_resonly_cont)
-mrm_resonly_for_plot$Var1 <- factor(mrm_resonly_for_plot$Var1, 
-                                    levels=c('allres', 'biores', 'landres'),
-                                    labels=c("ALL", "BIO", "LAND"))
+colnames(mrm_results) <- gsub("_dist", "", colnames(mrm_results))
+colnames(mrm_results) <- gsub("\\.\\.\\.", "_", colnames(mrm_results))
+mrm_resonly_cols_to_keep <- c("biores", "landres", "allres",
+                              "geog_biores", "geog_landres", "geog_allres",
+                              "env_biores", "env_landres", "env_allres",
+                              "geog_env_biores", "geog_env_landres", "geog_env_allres")
 
 
-mrm_resonly_plot <- ggplot(mrm_resonly_for_plot, aes(x=Var2, y=value, fill=Var1))+
-  geom_bar(stat = 'identity', position="stack")+
-  scale_fill_brewer(palette='Blues',name="IBR Model")+
-  ylim(c(0,41))+
-  # xlab("Rank")+
-  # ylab("Count")+
-  theme_minimal()+
-  ggtitle("MRM")+
-  theme(text = element_text(size = 12),
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
+## Resistance Only, unoptimized ##
+mrm_unoptimized_for_plot <- pivot_longer(mrm_results, 
+                                         cols = mrm_resonly_cols_to_keep, 
+                                         names_to = 'Model', 
+                                         values_to = 'R2')
+
+mrm_unoptimized_for_plot$Model <- factor(mrm_unoptimized_for_plot$Model, levels = mrm_resonly_cols_to_keep)
+
+# Group models by number of predictors for plotting
+mrm_unoptimized_for_plot$Group <- sapply(mrm_unoptimized_for_plot$Model, function(x) {
+  n <- lengths(regmatches(x, gregexpr("_", x)))
+  if (n == 0) {
+    "Single"
+  } else if (n == 1) {
+    "Double"
+  } else {
+    "Triple"
+  }
+})
+mrm_unoptimized_for_plot$Group <- factor(mrm_unoptimized_for_plot$Group, levels = c("Single", "Double", "Triple"))
+
+#  plot with replaced model labels
+mrm_resonly_plot <- ggplot(mrm_unoptimized_for_plot, aes(x = Model, y = R2, fill = Group)) +
+  geom_boxplot() +
+  scale_fill_brewer(palette = "Reds") +
+  xlab("Model") +
+  ylab(expression("Adjusted " * italic(R)^2)) +
+  scale_x_discrete(labels = function(x) sapply(x, map_model_label)) +
+  theme_minimal() +
+  theme(legend.position = "none",
+        axis.title.y = element_text(size = 12, color = "black"),
+        axis.text.x = element_text(angle = 45, hjust = 1),
         plot.title = element_text(hjust = 0.5),
-        title = element_text(size = 16, face = "bold"),
+        text = element_text(size = 12),
         legend.title = element_text(size = 14),
         legend.text = element_text(size = 12))
 mrm_resonly_plot
 
+colMeans(mrm_results[,mrm_resonly_cols_to_keep])
 
-## Land Only ##
-mrm_landonly <- mrm_results[,c('landres','env','geog')]
-mrm_landonly_ranks <- t(apply(-mrm_landonly, 1, rank))
-mrm_landonly_ranksums <- colSums(mrm_landonly_ranks ==1)
+# MRM rankings
+mrm_resonly_rankings <- mrm_results[,mrm_resonly_cols_to_keep]
+mrm_resonly_ranks <- t(apply(-mrm_resonly_rankings, 1, rank))
 
-mrm_landonly_ranks
-mrm_landonly_ranksums
-# Create contingency table
-mrm_landonly_cont <- table(c(col(mrm_landonly_ranks)), c(mrm_landonly_ranks))
-rownames(mrm_landonly_cont) <- colnames(mrm_landonly_ranks)
+mrm_resonly_ranksums <- colSums(mrm_resonly_ranks ==1)
 
-# Melting the data for plotting
-mrm_landonly_for_plot <- melt(mrm_landonly_cont)
-mrm_landonly_for_plot$Var1 <- factor(mrm_landonly_for_plot$Var1, 
-                                     levels = c("geog", "env", "landres"),
-                                     labels = c("IBD", "IBE", "IBR(LAND)"))
+# Convert to a data frame for ggplot
+mrm_df_first_res <- data.frame(
+  Model = names(mrm_resonly_ranksums),
+  Count = as.numeric(mrm_resonly_ranksums)
+)
+mrm_df_first_res$Model <- factor(mrm_df_first_res$Model, mrm_resonly_cols_to_keep)
 
-mrm_landonly_plot <- ggplot(mrm_landonly_for_plot, aes(x=Var2, y=value, fill=Var1))+
-  geom_bar(stat = 'identity', position="stack")+
-  scale_fill_brewer(palette='Reds',name="Driver")+
-  ylim(c(0,41))+
-  xlab("Rank")+
-  ylab("Count")+
-  theme_minimal()+
-  theme(text = element_text(size = 12),
-        axis.title.y = element_blank(),
-        title = element_text(size = 16, face = "bold"),
+mrm_df_first_res$Group <- sapply(mrm_df_first_res$Model, function(x) {
+  n <- lengths(regmatches(x, gregexpr("_", x)))
+  if (n == 0) {
+    "Single"
+  } else if (n == 1) {
+    "Double"
+  } else {
+    "Triple"
+  }
+})
+mrm_df_first_res$Group <- factor(mrm_df_first_res$Group, levels = c("Single", "Double", "Triple"))
+
+
+# Plot the counts with model labels
+mrm_resonly_plot_count <- ggplot(mrm_df_first_res, aes(x = Model, y = Count, fill = Group)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = Count), vjust = -0.5, size = 3) +
+  scale_fill_brewer(palette = "Reds") +
+  xlab("Model") +
+  ylab(expression("Count of Datasets with Highest Adjusted " * italic(R)^2)) +
+  ggtitle("MRM") +
+  scale_x_discrete(labels = function(x) sapply(x, map_model_label)) +
+  scale_y_continuous(breaks = seq(0, 12, by = 2), limits = c(0, 8)) +
+  theme_minimal() +
+  theme(legend.position = "none",
+        axis.title.y = element_text(size = 12, color = "black"),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        plot.title = element_text(hjust = 0.5),
+        text = element_text(size = 12),
         legend.title = element_text(size = 14),
         legend.text = element_text(size = 12))
+mrm_resonly_plot_count
+
+# find the top ranked driver for each species
+mrm_ranks_df <- data.frame(mrm_resonly_ranks)
+mrm_ranks_df$top_ranked <- apply(mrm_ranks_df[, mrm_resonly_cols_to_keep], 1, function(x) mrm_resonly_cols_to_keep[which.min(x)])
+mrm_ranks_df$top_ranked <- factor(mrm_ranks_df$top_ranked, levels = mrm_resonly_cols_to_keep)
+# count number of times each distance is included in best model
+mrm_ranks_df$has_biores    <- ifelse(grepl("biores", mrm_ranks_df$top_ranked), 1, 0)
+mrm_ranks_df$has_landres    <- ifelse(grepl("landres", mrm_ranks_df$top_ranked), 1, 0)
+mrm_ranks_df$has_allres <- ifelse(grepl("allres", mrm_ranks_df$top_ranked), 1, 0)
+
+has_res <- data.frame(count=colSums(mrm_ranks_df[,c('has_biores', 'has_landres', 'has_allres')]))
+has_res$Model <- gsub("has_", "", rownames(has_res))
+has_res$Model <- factor(has_res$Model, levels = c("biores", "landres", "allres"))
+has_res_plot <- ggplot(has_res, aes(x=Model, y=count, fill=Model)) +
+  geom_bar(stat='identity') +
+  geom_text(aes(label=count), vjust=-0.5, size=3) +
+  ylim(c(0,20)) +
+  scale_fill_brewer(palette = "Reds") +
+  xlab("Model") +
+  ylab("Count") +
+  ggtitle("MRM") +
+  scale_x_discrete(labels = function(x) sapply(x, map_model_label)) +
+  theme_minimal() +
+  theme(axis.title.y = element_text(size = 12, color = "black"),
+        axis.title.x = element_text(size = 12, color = "black"),
+        plot.title = element_text(hjust = 0.5),
+        text = element_text(size = 12),
+        legend.position = "none")
+has_res_plot
+
+# PLOT TOGETHER
+aic_resonly_plot_d2 <- aic_resonly_plot_d2
+aic_resonly_plot_d7 <- aic_resonly_plot_d7 + ylab(NULL)
+has_res_plot <- has_res_plot + ylab(NULL)
+top_bar <- ggarrange(aic_resonly_plot_d2, aic_resonly_plot_d7,
+                     ncol = 2, nrow = 1, 
+                     labels = c("A", "B"),
+                     label.x = 0.05)
+bottom_bar <- ggarrange(mrm_resonly_plot_count, has_res_plot,
+                        ncol = 2, nrow = 1, 
+                        labels = c("C", "D"),
+                        label.x = 0.05,
+                        align = "h")
+resonly_combined_plot <- ggarrange(top_bar, bottom_bar, 
+                                   ncol = 1, heights = c(1, 1.5))
+
+# Display the final plot
+print(resonly_combined_plot)
+
+ggsave("plots/resonly_plots.svg", plot = resonly_combined_plot, width = 10, height = 8)
+
+##########################################################
+## Optimized Landscape Resistance Only against IBD, IBE ##
+##########################################################
+extra_arg <- "_multi_optimized_scaled_AICc"
+modresults_landonly <- read.csv(paste0('aic_results', extra_arg, '.csv'))
+
+# Keep optimized landscape resistance only
+cols_to_keep_landonly <- c("geog_dist", "env_dist", "landres_dist")
+mod_order_landonly <- c("IBD", "IBE", "IBR[LAND]")
+
+# Rank models, allowing multiple best ranked models by delta AICc threshold
+aic_landonly <- as.matrix(modresults_landonly[,cols_to_keep_landonly])
+aic_landonly_adjusted_ranks_d2 <- t(apply(aic_landonly, 1,function(x) adjusted_rank(x, delta_threshold=2)))
+colnames(aic_landonly_adjusted_ranks_d2) <- mod_order_landonly
+aic_landonly_ranksums_adj_d2 <- colSums(aic_landonly_adjusted_ranks_d2 ==1)
+aic_landonly_ranksums_adj_d2
+
+# Convert to a data frame for ggplot
+df_first_land_d2 <- data.frame(
+  Model = names(aic_landonly_ranksums_adj_d2),
+  Count = as.numeric(aic_landonly_ranksums_adj_d2)
+)
+df_first_land_d2$Model <- factor(df_first_land_d2$Model, mod_order_landonly)
+
+# Plot the counts with model labels mapped
+aic_landonly_plot_d2 <- ggplot(df_first_land_d2, aes(x = Model, y = Count, fill = Model)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = Count), vjust = -0.5, size = 3) +
+  ylim(0, 40) +
+  scale_fill_brewer(palette = "Blues") +
+  ylab("Count of Datasets with Lowest AICc") +
+  ggtitle(expression(LME - Delta~AICc~"\u2264"~2)) +
+  scale_x_discrete(labels = function(x) sapply(x, map_model_label)) +
+  theme_minimal() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_text(size = 12, color = "black"),
+        plot.title = element_text(hjust = 0.5),
+        text = element_text(size = 12),
+        legend.position = "none")
+aic_landonly_plot_d2
+
+## repeat for delta 7 ##
+aic_landonly_adjusted_ranks_d7 <- t(apply(aic_landonly, 1,function(x) adjusted_rank(x, delta_threshold=7)))
+colnames(aic_landonly_adjusted_ranks_d7) <- mod_order_landonly
+aic_landonly_ranksums_adj_d7 <- colSums(aic_landonly_adjusted_ranks_d7 ==1)
+aic_landonly_ranksums_adj_d7
+
+# Convert to a data frame for ggplot
+df_first_land_d7 <- data.frame(
+  Model = names(aic_landonly_ranksums_adj_d7),
+  Count = as.numeric(aic_landonly_ranksums_adj_d7)
+)
+df_first_land_d7$Model <- factor(df_first_land_d7$Model, mod_order_landonly)
+
+# Plot the counts with model labels mapped
+aic_landonly_plot_d7 <- ggplot(df_first_land_d7, aes(x = Model, y = Count, fill = Model)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = Count), vjust = -0.5, size = 3) +
+  ylim(0, 40) +
+  scale_fill_brewer(palette = "Blues") +
+  ylab("Count of Datasets with Lowest AICc") +
+  ggtitle(expression(LME - Delta~AICc~"\u2264"~7)) +
+  scale_x_discrete(labels = function(x) sapply(x, map_model_label)) +
+  theme_minimal() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_text(size = 12, color = "black"),
+        plot.title = element_text(hjust = 0.5),
+        text = element_text(size = 12),
+        legend.position = "none")
+aic_landonly_plot_d7
+
+
+## MRM ##
+extra_arg <- "_multi_optimized_scaled"
+mrm_results_landonly <- read.csv(paste0('mrm_r2_adj_results', extra_arg, '.csv'))
+
+colnames(mrm_results_landonly) <- gsub("_dist", "", colnames(mrm_results_landonly))
+colnames(mrm_results_landonly) <- gsub("\\.\\.\\.", "_", colnames(mrm_results_landonly))
+mrm_landonly_cols_to_keep <- c("geog", "env", "landres",
+                               "geog_env", "geog_landres", "env_landres",
+                               "geog_env_landres")
+mrm_landonly <- mrm_results_landonly[,mrm_landonly_cols_to_keep]
+mrm_landonly_ranks <- t(apply(-mrm_landonly, 1, rank))
+
+mrm_landonly_ranksums <- colSums(mrm_landonly_ranks ==1)
+
+# Melting the data for plotting
+# Convert to a data frame for ggplot
+mrm_df_first_land <- data.frame(
+  Model = names(mrm_landonly_ranksums),
+  Count = as.numeric(mrm_landonly_ranksums)
+)
+mrm_df_first_land$Model <- factor(mrm_df_first_land$Model, mrm_landonly_cols_to_keep)
+
+mrm_landonly_plot <- ggplot(mrm_df_first_land, aes(x=Model, y=Count, fill=Model))+
+  geom_bar(stat = 'identity', position="stack")+
+  geom_text(aes(label = Count), vjust = -0.5, size = 3) +
+  scale_fill_brewer(palette='Reds',name="IBR Model")+
+  ylim(c(0,12))+
+  xlab("Model")+
+  ggtitle("MRM") +
+  ylab(expression("Count of Datasets with Highest Adjusted " * italic(R)^2)) +
+  scale_x_discrete(labels = function(x) sapply(x, map_model_label)) +
+  scale_y_continuous(breaks = seq(0, 12, by = 2), limits = c(0, 12)) +
+  theme_minimal()+
+  theme(legend.position = "none",
+        axis.title.y = element_text(size = 12, color = "black"),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        plot.title = element_text(hjust = 0.5),
+        text = element_text(size = 12))
 mrm_landonly_plot
 
+mrm_landonly_for_plot <- pivot_longer(mrm_landonly, 
+                                      cols = mrm_landonly_cols_to_keep, 
+                                      names_to = 'Model', 
+                                      values_to = 'R2')
 
-## Arrange quad graphs
-legend_top <- get_legend(mrm_resonly_plot + theme(legend.position="right"))
-legend_bottom <- get_legend(mrm_landonly_plot + theme(legend.position="right"))
+mrm_landonly_for_plot$Model <- factor(mrm_landonly_for_plot$Model, 
+                                      levels = mrm_landonly_cols_to_keep)
 
-# Remove legends, gridlines and x- and y-labels from individual plots
-aic_landonly_plot <- aic_landonly_plot + theme(legend.position="none",
-                                               axis.title.x = element_blank(),
-                                               axis.title.y = element_blank(),
-                                               panel.grid.major = element_blank(),
-                                               panel.grid.minor = element_blank())
-aic_resonly_plot <- aic_resonly_plot + theme(legend.position="none",
-                                             axis.title.x = element_blank(),
-                                             axis.title.y = element_blank(),
-                                             panel.grid.major = element_blank(),
-                                             panel.grid.minor = element_blank())
-mrm_resonly_plot <- mrm_resonly_plot + theme(legend.position="none",
-                                             axis.title.x = element_blank(),
-                                             axis.title.y = element_blank(),
-                                             panel.grid.major = element_blank(),
-                                             panel.grid.minor = element_blank())
-mrm_landonly_plot <- mrm_landonly_plot + theme(legend.position="none",
-                                               axis.title.x = element_blank(),
-                                               axis.title.y = element_blank(),
-                                               panel.grid.major = element_blank(),
-                                               panel.grid.minor = element_blank())
+mrm_landonly_plot_r2 <- ggplot(mrm_landonly_for_plot, aes(x=Model, y=R2, fill=Model))+
+  geom_boxplot()+
+  scale_fill_brewer(palette='Reds')+
+  xlab("Model")+
+  ylab(expression("Adjusted " * italic(R)^2))+
+  ggtitle("MRM")+
+  scale_x_discrete(labels = function(x) sapply(x, map_model_label)) +
+  theme_minimal()+
+  theme(legend.position = "none",
+        axis.title.y = element_text(size = 12, color = "black"),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        text = element_text(size = 12))
+mrm_landonly_plot_r2
 
 
-# Arrange in 2x2 grid
-mrm_resonly_plot 
+mrm_ranks_df_landonly <- data.frame(mrm_landonly_ranks)
+mrm_ranks_df_landonly$top_ranked <- apply(mrm_ranks_df_landonly[, mrm_landonly_cols_to_keep], 1, function(x) mrm_landonly_cols_to_keep[which.min(x)])
+mrm_ranks_df_landonly$top_ranked <- factor(mrm_ranks_df_landonly$top_ranked, levels = mrm_landonly_cols_to_keep)
+# count number of times each distance is included in best model
+mrm_ranks_df_landonly$has_geog    <- ifelse(grepl("geog", mrm_ranks_df_landonly$top_ranked), 1, 0)
+mrm_ranks_df_landonly$has_env    <- ifelse(grepl("env", mrm_ranks_df_landonly$top_ranked), 1, 0)
+mrm_ranks_df_landonly$has_landres <- ifelse(grepl("landres", mrm_ranks_df_landonly$top_ranked), 1, 0)
 
-top_row <- ggarrange(mrm_resonly_plot, aic_resonly_plot,
-                     legend_top, ncol=3, widths = c(1, 1, 0.5),
-                     labels=c("A", "B"))
-bottom_row <- ggarrange(mrm_landonly_plot + theme(plot.margin=margin(15,0,0,0)), 
-                        aic_landonly_plot + theme(plot.margin=margin(15,0,0,0)),
-                        legend_bottom, ncol=3, widths = c(1, 1, 0.5),
-                        labels=c("C", "D"))
+has_mod <- data.frame(count=colSums(mrm_ranks_df_landonly[,c('has_geog', 'has_env', 'has_landres')]))
+has_mod$Model <- gsub("has_", "", rownames(has_mod))
+has_mod$Model <- factor(has_mod$Model, levels = c("geog", "env", "landres"))
+
+has_mod_plot <- ggplot(has_mod, aes(x=Model, y=count, fill=Model)) +
+  geom_bar(stat='identity') +
+  geom_text(aes(label=count), vjust=-0.5, size=3) +
+  ylim(c(0,40)) +
+  scale_fill_brewer(palette = "Reds") +
+  xlab("Model") +
+  ylab("Count") +
+  ggtitle("MRM") +
+  scale_x_discrete(labels = function(x) sapply(x, map_model_label)) +
+  theme_minimal() +
+  theme(axis.title.y = element_text(size = 12, color = "black"),
+        axis.title.x = element_text(size = 12, color = "black"),
+        plot.title = element_text(hjust = 0.5),
+        text = element_text(size = 12),
+        legend.position = "none")
+has_mod_plot
+
+## Arrange graphs
+aic_landonly_plot_d7 <- aic_landonly_plot_d7 + ylab(NULL)
+has_mod_plot <- has_mod_plot + ylab(NULL)
+top_row <- ggarrange(aic_landonly_plot_d2, aic_landonly_plot_d7,
+                     ncol=2, widths = c(1, 1, 0.5),
+                     labels=c("A", "B"),
+                     label.x = 0.05)
+bottom_row <- ggarrange(mrm_landonly_plot,has_mod_plot,
+                        labels=c("C", "D"),
+                        label.x = 0.05,
+                        # label.y = 1.05,
+                        align="h")
 driver_plot <- ggarrange(top_row, bottom_row, 
                          ncol=1, nrow=2)
 
-driver_plot <- annotate_figure(driver_plot,
-                               bottom = text_grob("Rank",size=14,face="bold", hjust=2.5),
-                               left = text_grob("Number of species", size=14, face="bold", rot=90)
-)
-
 driver_plot
 
-ggsave("z_submission/plots/driver_rankings.svg", plot = driver_plot, width = 10, height = 8)
+ggsave("plots/landonly_plots.svg", plot = driver_plot, width = 10, height = 8)
+
 
 #########################
 ## Variable Importance ##
 #########################
 varimp <- read.csv('variable_importance.csv')
-varimp_pc <- read.csv('rel_var_importance_2.csv')
+varimp_pc <- read.csv('rel_var_importance.csv')
 
 temp <- c("bio1", "bio2", "bio4", "bio8")
 precip <- c("bio12", "bio15", "bio18")
-human <- c("Roads", "Croplands", "Pasture", "Railways", "Built")
+human <- c("Croplands", "Pasture", "Built")
 veg <- c("Tree", "Shrub", "Grass")
 
 temp_color <- "#E74C3C"
@@ -236,13 +447,13 @@ calculate_median_order <- function(df) {
   return(order)
 }
 
-bio_order <- calculate_median_order(varimp_pc[varimp_pc$model == 'bioclim', 3:9])
-land_order <- calculate_median_order(varimp_pc[varimp_pc$model == 'landscape', 10:17])
-all_order <- calculate_median_order(varimp_pc[varimp_pc$model == 'all', 3:17])
+bio_order <- calculate_median_order(varimp_pc[varimp_pc$model == 'bioclim', 9:15])
+land_order <- calculate_median_order(varimp_pc[varimp_pc$model == 'landscape', 3:8])
+all_order <- calculate_median_order(varimp_pc[varimp_pc$model == 'all', 3:15])
 
 # BIOCLIM model
 bio_varimp_pc <- varimp_pc[varimp_pc$model=='bioclim',]
-bio_varimp_melted <- melt(bio_varimp_pc[,3:9])
+bio_varimp_melted <- melt(bio_varimp_pc[,9:15])
 bio_varimp_melted$variable_type <- variable_to_type[as.character(bio_varimp_melted$variable)]
 bio_varimp_boxplot <- ggplot(bio_varimp_melted, aes(x=reorder(variable, value, FUN = median), y=value, fill=variable_type))+
   geom_boxplot()+
@@ -256,10 +467,10 @@ bio_varimp_boxplot <- ggplot(bio_varimp_melted, aes(x=reorder(variable, value, F
         plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold"))
-
+bio_varimp_boxplot
 # LANDSCAPE model
 land_varimp_pc <- varimp_pc[varimp_pc$model=='landscape',]
-land_varimp_melted <- melt(land_varimp_pc[,10:17])
+land_varimp_melted <- melt(land_varimp_pc[,3:8])
 land_varimp_melted$variable_type <- variable_to_type[as.character(land_varimp_melted$variable)]
 land_varimp_boxplot <- ggplot(land_varimp_melted, aes(x=reorder(variable, value, FUN = median), y=value, fill=variable_type))+
   geom_boxplot()+
@@ -273,10 +484,10 @@ land_varimp_boxplot <- ggplot(land_varimp_melted, aes(x=reorder(variable, value,
         plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold"))
-
+land_varimp_boxplot
 # ALL model
 all_varimp_pc <- varimp_pc[varimp_pc$model=='all',]
-all_varimp_melted <- melt(all_varimp_pc[,3:17])
+all_varimp_melted <- melt(all_varimp_pc[,3:15])
 all_varimp_melted$variable_type <- variable_to_type[as.character(all_varimp_melted$variable)]
 all_varimp_boxplot <- ggplot(all_varimp_melted, aes(x=reorder(variable, value, FUN = median), y=value, fill=variable_type))+
   geom_boxplot()+
@@ -293,6 +504,7 @@ all_varimp_boxplot <- ggplot(all_varimp_melted, aes(x=reorder(variable, value, F
         plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold"))
+all_varimp_boxplot
 
 # Arrange the plots
 combined_plot <- plot_grid(
